@@ -3,6 +3,17 @@
 #include <string.h>
 #include <errno.h>
 
+#define BITS_DESLOCAMENTO 8
+#define MASCARA_DESLOCAMENTO 0xFF
+
+static int extrair_pagina(int endereco) {
+    return endereco >> BITS_DESLOCAMENTO;
+}
+
+static int extrair_deslocamento(int endereco) {
+    return endereco & MASCARA_DESLOCAMENTO;
+}
+
 static int algoritmo_valido(const char *nome) {
     return strcmp(nome, "fifo") == 0 || strcmp(nome, "lru") == 0;
 }
@@ -66,6 +77,10 @@ int main(int argc, char *argv[]) {
     if (!validar_arquivo(argv[1])) {
         return 1;
     }
-    printf("Argumentos e arquivo validos.\n");
+    int exemplos[] = {16916, 62493, 0, 65535};
+    for (int i = 0; i < 4; i++) {
+        printf("endereco %d -> pagina %d deslocamento %d\n",
+               exemplos[i], extrair_pagina(exemplos[i]), extrair_deslocamento(exemplos[i]));
+    }
     return 0;
 }

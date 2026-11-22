@@ -1,0 +1,68 @@
+Script started on 2026-11-22 06:41:42-03:00 [TERM="xterm-256color" TTY="/dev/pts/5" COLUMNS="177" LINES="14"]
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mmake[27m
+[7m./vm addresses.txt lru fifo[27m
+[7m./vm addresses.txt fifo lru[27m
+[7m./vm addresses.txt lru[27m
+[7m./vm addresses.txt xyz fifo[27m
+[7m./vm addresses.txt lru abc[27m[A[A[A[A[A]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ make
+./vm addresses.txt lru fifo
+./vm addresses.txt fifo lru
+./vm addresses.txt lru
+./vm addresses.txt xyz fifo
+./vm addresses.txt lru abc
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+Argumentos validos.
+Argumentos validos.
+Erro: uso correto: ./vm <arquivo_enderecos> <fifo|lru> <fifo|lru>
+Erro: algoritmo de pagina 'xyz' invalido (use fifo ou lru)
+Erro: algoritmo de TLB 'abc' invalido (use fifo ou lru)
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mmake[27m
+[7m./vm addresses.txt lru fifo[27m
+[7m./vm naoexiste.txt lru fifo[27m
+[7mprintf "123\nabc\n" > ruim.txt && ./vm ruim.txt lru fifo[27m
+[7mprintf "70000\n" > fora.txt && ./vm fora.txt lru fifo[27m
+[7m: > vazio.txt && ./vm vazio.txt lru fifo[27m
+[7mrm -f ruim.txt fora.txt vazio.txt[27m[A[A[A[A[A[Amake
+./vm addresses.txt lru fifo
+./vm naoexiste.txt lru fifo
+printf "123\nabc\n" > ruim.txt && ./vm ruim.txt lru fifo
+printf "70000\n" > fora.txt && ./vm fora.txt lru fifo
+: > vazio.txt && ./vm vazio.txt lru fifo
+rm -f ruim.txt fora.txt vazio.txt
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+Erro: nao foi possivel abrir 'addresses.txt': No such file or directory
+Erro: nao foi possivel abrir 'naoexiste.txt': No such file or directory
+Erro: formato invalido na linha 2 de 'ruim.txt'
+Erro: formato invalido na linha 1 de 'fora.txt'
+Erro: o arquivo 'vazio.txt' esta vazio
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mmake[27m
+[7m./vm addresses.txt lru fifo[27m
+[7m./vm naoexiste.txt lru fifo[27m
+[7mprintf "123\nabc\n" > ruim.txt && ./vm ruim.txt lru fifo[27m
+[7mprintf "70000\n" > fora.txt && ./vm fora.txt lru fifo[27m
+[7m: > vazio.txt && ./vm vazio.txt lru fifo[27m
+[7mrm -f ruim.txt fora.txt vazio.txt[27m[A[A[A[A[A[Amake
+./vm addresses.txt lru fifo
+./vm naoexiste.txt lru fifo
+printf "123\nabc\n" > ruim.txt && ./vm ruim.txt lru fifo
+printf "70000\n" > fora.txt && ./vm fora.txt lru fifo
+: > vazio.txt && ./vm vazio.txt lru fifo
+rm -f ruim.txt fora.txt vazio.txt
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+Argumentos e arquivo validos.
+Erro: nao foi possivel abrir 'naoexiste.txt': No such file or directory
+Erro: formato invalido na linha 2 de 'ruim.txt'
+Erro: formato invalido na linha 1 de 'fora.txt'
+Erro: o arquivo 'vazio.txt' esta vazio
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mfeat: implementa validar_arquivo[27m[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[1Pfeat: implementa validar_arquiv[K[K[K[K[K[K[K[K[7mmake[27m
+[7m./vm addresses.txt lru fifo[27m[A]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ make
+./vm addresses.txt lru fifo
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+endereco 16916 -> pagina 66 deslocamento 20
+endereco 62493 -> pagina 244 deslocamento 29
+endereco 0 -> pagina 0 deslocamento 0
+endereco 65535 -> pagina 255 deslocamento 255
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ exit
+[?2004lexit
+
+Script done on 2026-11-22 07:03:52-03:00 [COMMAND_EXIT_CODE="0"]
