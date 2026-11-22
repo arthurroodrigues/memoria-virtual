@@ -5,6 +5,8 @@
 
 #define BITS_DESLOCAMENTO 8
 #define MASCARA_DESLOCAMENTO 0xFF
+#define TAMANHO_PAGINA 256
+#define ARQUIVO_ARMAZENAMENTO "BACKING_STORE.bin"
 
 static int extrair_pagina(int endereco) {
     return endereco >> BITS_DESLOCAMENTO;
@@ -12,6 +14,12 @@ static int extrair_pagina(int endereco) {
 
 static int extrair_deslocamento(int endereco) {
     return endereco & MASCARA_DESLOCAMENTO;
+}
+
+static int carregar_pagina(FILE *armazenamento, int pagina, signed char *destino) {
+    if (fseek(armazenamento, (long)pagina * TAMANHO_PAGINA, SEEK_SET) != 0) return 0;
+    if (fread(destino, 1, TAMANHO_PAGINA, armazenamento) != TAMANHO_PAGINA) return 0;
+    return 1;
 }
 
 static int algoritmo_valido(const char *nome) {
@@ -77,10 +85,22 @@ int main(int argc, char *argv[]) {
     if (!validar_arquivo(argv[1])) {
         return 1;
     }
-    int exemplos[] = {16916, 62493, 0, 65535};
-    for (int i = 0; i < 4; i++) {
-        printf("endereco %d -> pagina %d deslocamento %d\n",
-               exemplos[i], extrair_pagina(exemplos[i]), extrair_deslocamento(exemplos[i]));
+    FILE *armazenamento = fopen(ARQUIVO_ARMAZENAMENTO, "rb");
+    if (armazenamento == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel abrir '%s': %s\n", ARQUIVO_ARMAZENAMENTO, strerror(errno));
+        return 1;
     }
+    int endereco = 16916;
+    int numero_pagina = extrair_pagina(endereco);
+    int deslocamento = extrair_deslocamento(endereco);
+    signed char conteudo[TAMANHO_PAGINA];
+    if (!carregar_pagina(armazenamento, numero_pagina, conteudo)) {
+        fprintf(stderr, "Erro: falha ao ler a pagina %d\n", numero_pagina);
+        fclose(armazenamento);
+        return 1;
+    }
+    printf("endereco %d -> pagina %d deslocamento %d valor %d\n",
+           endereco, numero_pagina, deslocamento, conteudo[deslocamento]);
+    fclose(armazenamento);
     return 0;
 }
