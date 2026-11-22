@@ -7,6 +7,7 @@
 #define MASCARA_DESLOCAMENTO 0xFF
 #define TAMANHO_PAGINA 256
 #define ARQUIVO_ARMAZENAMENTO "BACKING_STORE.bin"
+#define NUM_PAGINAS 256
 
 static int extrair_pagina(int endereco) {
     return endereco >> BITS_DESLOCAMENTO;
@@ -20,6 +21,23 @@ static int carregar_pagina(FILE *armazenamento, int pagina, signed char *destino
     if (fseek(armazenamento, (long)pagina * TAMANHO_PAGINA, SEEK_SET) != 0) return 0;
     if (fread(destino, 1, TAMANHO_PAGINA, armazenamento) != TAMANHO_PAGINA) return 0;
     return 1;
+}
+
+static int tabela_paginas[NUM_PAGINAS];
+static signed char memoria_fisica[NUM_PAGINAS][TAMANHO_PAGINA];
+
+static int traduzir_sem_tlb(FILE *armazenamento, int endereco, int *proximo_frame, int *faltas, signed char *valor) {
+    int pagina = extrair_pagina(endereco);
+    int deslocamento = extrair_deslocamento(endereco);
+    if (tabela_paginas[pagina] == -1) {
+        if (!carregar_pagina(armazenamento, pagina, memoria_fisica[*proximo_frame])) return -1;
+        tabela_paginas[pagina] = *proximo_frame;
+        (*proximo_frame)++;
+        (*faltas)++;
+    }
+    int frame = tabela_paginas[pagina];
+    *valor = memoria_fisica[frame][deslocamento];
+    return frame * TAMANHO_PAGINA + deslocamento;
 }
 
 static int algoritmo_valido(const char *nome) {
@@ -90,17 +108,32 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Erro: nao foi possivel abrir '%s': %s\n", ARQUIVO_ARMAZENAMENTO, strerror(errno));
         return 1;
     }
-    int endereco = 16916;
-    int numero_pagina = extrair_pagina(endereco);
-    int deslocamento = extrair_deslocamento(endereco);
-    signed char conteudo[TAMANHO_PAGINA];
-    if (!carregar_pagina(armazenamento, numero_pagina, conteudo)) {
-        fprintf(stderr, "Erro: falha ao ler a pagina %d\n", numero_pagina);
+    FILE *enderecos = fopen(argv[1], "r");
+    if (enderecos == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel abrir '%s': %s\n", argv[1], strerror(errno));
         fclose(armazenamento);
         return 1;
     }
-    printf("endereco %d -> pagina %d deslocamento %d valor %d\n",
-           endereco, numero_pagina, deslocamento, conteudo[deslocamento]);
+    for (int i = 0; i < NUM_PAGINAS; i++) {
+        tabela_paginas[i] = -1;
+    }
+    int proximo_frame = 0;
+    int faltas = 0;
+    char linha[64];
+    while (fgets(linha, sizeof(linha), enderecos) != NULL) {
+        int endereco = atoi(linha);
+        signed char valor;
+        int fisico = traduzir_sem_tlb(armazenamento, endereco, &proximo_frame, &faltas, &valor);
+        if (fisico < 0) {
+            fprintf(stderr, "Erro: falha ao ler o armazenamento\n");
+            fclose(enderecos);
+            fclose(armazenamento);
+            return 1;
+        }
+        printf("Virtual address: %d Physical address: %d Value: %d\n", endereco, fisico, valor);
+    }
+    fprintf(stderr, "Page faults: %d\n", faltas);
+    fclose(enderecos);
     fclose(armazenamento);
     return 0;
 }
