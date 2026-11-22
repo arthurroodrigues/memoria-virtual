@@ -59,3 +59,4 @@ dkms.conf
 addresses.txt
 correct.txt
 BACKING_STORE.bin
+vm
