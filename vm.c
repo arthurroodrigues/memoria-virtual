@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <pthread.h>    
 
 #define BITS_DESLOCAMENTO 8
 #define MASCARA_DESLOCAMENTO 0xFF
@@ -11,6 +12,12 @@
 #define NUM_FRAMES 128
 #define TAMANHO_TLB 16
 #define ARQUIVO_SAIDA "correct.txt"
+
+typedef struct {
+    int indice;
+    int pagina;
+    int achou;
+} ArgumentoBusca;
 
 static int extrair_pagina(int endereco) {
     return endereco >> BITS_DESLOCAMENTO;
@@ -38,14 +45,33 @@ static int proxima_entrada_tlb = 0;
 static long uso_tlb[TAMANHO_TLB];
 static long relogio_tlb = 0;
 
-static int buscar_tlb(int pagina, int *frame) {
+static void *verificar_entrada_tlb(void *argumento) {
+    ArgumentoBusca *busca = argumento;
+    busca->achou = (tlb_pagina[busca->indice] == busca->pagina);
+    return NULL;
+}
+
+static int buscar_tlb_threads(int pagina, int *frame) {
+    pthread_t threads[TAMANHO_TLB];
+    ArgumentoBusca argumentos[TAMANHO_TLB];
+    int criadas = 0;
     for (int i = 0; i < TAMANHO_TLB; i++) {
-        if (tlb_pagina[i] == pagina) {
-            *frame = tlb_frame[i];
-            return i;
-        }
+        argumentos[i].indice = i;
+        argumentos[i].pagina = pagina;
+        argumentos[i].achou = 0;
+        if (pthread_create(&threads[i], NULL, verificar_entrada_tlb, &argumentos[i]) != 0) break;
+        criadas++;
     }
-    return -1;
+    for (int i = criadas; i < TAMANHO_TLB; i++) {
+        argumentos[i].achou = (tlb_pagina[i] == pagina);
+    }
+    int encontrado = -1;
+    for (int i = 0; i < TAMANHO_TLB; i++) {
+        if (i < criadas) pthread_join(threads[i], NULL);
+        if (argumentos[i].achou && encontrado == -1) encontrado = i;
+    }
+    if (encontrado >= 0) *frame = tlb_frame[encontrado];
+    return encontrado;
 }
 
 static int inserir_tlb_fifo(int pagina, int frame) {
@@ -114,7 +140,7 @@ static int traduzir_endereco(FILE *armazenamento, int endereco, int usa_lru, int
     int pagina = extrair_pagina(endereco);
     int deslocamento = extrair_deslocamento(endereco);
     int frame;
-    int indice = buscar_tlb(pagina, &frame);
+    int indice = buscar_tlb_threads(pagina, &frame);
     if (indice >= 0) {
         (*acertos_tlb)++;
         *indice_tlb = indice;
