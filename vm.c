@@ -10,6 +10,7 @@
 #define NUM_PAGINAS 256
 #define NUM_FRAMES 128
 #define TAMANHO_TLB 16
+#define ARQUIVO_SAIDA "correct.txt"
 
 static int extrair_pagina(int endereco) {
     return endereco >> BITS_DESLOCAMENTO;
@@ -144,6 +145,14 @@ static int traduzir_endereco(FILE *armazenamento, int endereco, int usa_lru, int
     return frame * TAMANHO_PAGINA + deslocamento;
 }
 
+static void gravar_resumo(FILE *saida, int total, int faltas, int acertos_tlb) {
+    fprintf(saida, "Number of Translated Addresses = %d\n", total);
+    fprintf(saida, "Page Faults = %d\n", faltas);
+    fprintf(saida, "Page Fault Rate = %.3f\n", (double)faltas / total);
+    fprintf(saida, "TLB Hits = %d\n", acertos_tlb);
+    fprintf(saida, "TLB Hit Rate = %.3f\n", (double)acertos_tlb / total);
+}
+
 static int algoritmo_valido(const char *nome) {
     return strcmp(nome, "fifo") == 0 || strcmp(nome, "lru") == 0;
 }
@@ -218,6 +227,13 @@ int main(int argc, char *argv[]) {
         fclose(armazenamento);
         return 1;
     }
+    FILE *saida = fopen(ARQUIVO_SAIDA, "w");
+    if (saida == NULL) {
+        fprintf(stderr, "Erro: nao foi possivel criar '%s': %s\n", ARQUIVO_SAIDA, strerror(errno));
+        fclose(enderecos);
+        fclose(armazenamento);
+        return 1;
+    }
     for (int i = 0; i < NUM_PAGINAS; i++) {
         tabela_paginas[i] = -1;
     }
@@ -228,6 +244,7 @@ int main(int argc, char *argv[]) {
     int vitima_fifo = 0;
     int faltas = 0;
     int acertos_tlb = 0;
+    int total = 0;
     int usa_lru = strcmp(argv[2], "lru") == 0;
     int usa_lru_tlb = strcmp(argv[3], "lru") == 0;
     char linha[64];
@@ -238,13 +255,16 @@ int main(int argc, char *argv[]) {
         int fisico = traduzir_endereco(armazenamento, endereco, usa_lru, usa_lru_tlb, &proximo_frame, &vitima_fifo, &faltas, &acertos_tlb, &indice_tlb, &valor);
         if (fisico < 0) {
             fprintf(stderr, "Erro: falha ao ler o armazenamento\n");
+            fclose(saida);
             fclose(enderecos);
             fclose(armazenamento);
             return 1;
         }
-        printf("Virtual address: %d TLB: %d Physical address: %d Value: %d\n", endereco, indice_tlb, fisico, valor);
+        fprintf(saida, "Virtual address: %d TLB: %d Physical address: %d Value: %d\n", endereco, indice_tlb, fisico, valor);
+        total++;
     }
-    fprintf(stderr, "Page faults: %d\nTLB hits: %d\n", faltas, acertos_tlb);
+    gravar_resumo(saida, total, faltas, acertos_tlb);
+    fclose(saida);
     fclose(enderecos);
     fclose(armazenamento);
     return 0;
