@@ -26,6 +26,8 @@ static int carregar_pagina(FILE *armazenamento, int pagina, signed char *destino
 
 static int tabela_paginas[NUM_PAGINAS];
 static int pagina_do_frame[NUM_FRAMES];
+static long ultimo_uso[NUM_FRAMES];
+static long relogio = 0;
 static signed char memoria_fisica[NUM_FRAMES][TAMANHO_PAGINA];
 
 static int escolher_frame_fifo(int *proximo_frame, int *vitima_fifo) {
@@ -40,17 +42,38 @@ static int escolher_frame_fifo(int *proximo_frame, int *vitima_fifo) {
     return frame;
 }
 
-static int traduzir_sem_tlb(FILE *armazenamento, int endereco, int *proximo_frame, int *vitima_fifo, int *faltas, signed char *valor) {
+static int escolher_frame_lru(int *proximo_frame) {
+    if (*proximo_frame < NUM_FRAMES) {
+        int frame = *proximo_frame;
+        (*proximo_frame)++;
+        return frame;
+    }
+    int vitima = 0;
+    for (int f = 1; f < NUM_FRAMES; f++) {
+        if (ultimo_uso[f] < ultimo_uso[vitima]) vitima = f;
+    }
+    tabela_paginas[pagina_do_frame[vitima]] = -1;
+    return vitima;
+}
+
+static int traduzir_sem_tlb(FILE *armazenamento, int endereco, int usa_lru, int *proximo_frame, int *vitima_fifo, int *faltas, signed char *valor) {
     int pagina = extrair_pagina(endereco);
     int deslocamento = extrair_deslocamento(endereco);
     if (tabela_paginas[pagina] == -1) {
-        int frame = escolher_frame_fifo(proximo_frame, vitima_fifo);
+        int frame;
+        if (usa_lru) {
+            frame = escolher_frame_lru(proximo_frame);
+        } else {
+            frame = escolher_frame_fifo(proximo_frame, vitima_fifo);
+        }
         if (!carregar_pagina(armazenamento, pagina, memoria_fisica[frame])) return -1;
         tabela_paginas[pagina] = frame;
         pagina_do_frame[frame] = pagina;
         (*faltas)++;
     }
     int frame = tabela_paginas[pagina];
+    relogio++;
+    ultimo_uso[frame] = relogio;
     *valor = memoria_fisica[frame][deslocamento];
     return frame * TAMANHO_PAGINA + deslocamento;
 }
@@ -134,12 +157,13 @@ int main(int argc, char *argv[]) {
     }
     int proximo_frame = 0;
     int vitima_fifo = 0;
+    int usa_lru = strcmp(argv[2], "lru") == 0;
     int faltas = 0;
     char linha[64];
     while (fgets(linha, sizeof(linha), enderecos) != NULL) {
         int endereco = atoi(linha);
         signed char valor;
-        int fisico = traduzir_sem_tlb(armazenamento, endereco, &proximo_frame, &vitima_fifo, &faltas, &valor);
+        int fisico = traduzir_sem_tlb(armazenamento, endereco, usa_lru, &proximo_frame, &vitima_fifo, &faltas, &valor);
         if (fisico < 0) {
             fprintf(stderr, "Erro: falha ao ler o armazenamento\n");
             fclose(enderecos);
