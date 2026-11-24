@@ -8,6 +8,7 @@
 #define TAMANHO_PAGINA 256
 #define ARQUIVO_ARMAZENAMENTO "BACKING_STORE.bin"
 #define NUM_PAGINAS 256
+#define NUM_FRAMES 128
 
 static int extrair_pagina(int endereco) {
     return endereco >> BITS_DESLOCAMENTO;
@@ -24,15 +25,29 @@ static int carregar_pagina(FILE *armazenamento, int pagina, signed char *destino
 }
 
 static int tabela_paginas[NUM_PAGINAS];
-static signed char memoria_fisica[NUM_PAGINAS][TAMANHO_PAGINA];
+static int pagina_do_frame[NUM_FRAMES];
+static signed char memoria_fisica[NUM_FRAMES][TAMANHO_PAGINA];
 
-static int traduzir_sem_tlb(FILE *armazenamento, int endereco, int *proximo_frame, int *faltas, signed char *valor) {
+static int escolher_frame_fifo(int *proximo_frame, int *vitima_fifo) {
+    if (*proximo_frame < NUM_FRAMES) {
+        int frame = *proximo_frame;
+        (*proximo_frame)++;
+        return frame;
+    }
+    int frame = *vitima_fifo;
+    *vitima_fifo = (*vitima_fifo + 1) % NUM_FRAMES;
+    tabela_paginas[pagina_do_frame[frame]] = -1;
+    return frame;
+}
+
+static int traduzir_sem_tlb(FILE *armazenamento, int endereco, int *proximo_frame, int *vitima_fifo, int *faltas, signed char *valor) {
     int pagina = extrair_pagina(endereco);
     int deslocamento = extrair_deslocamento(endereco);
     if (tabela_paginas[pagina] == -1) {
-        if (!carregar_pagina(armazenamento, pagina, memoria_fisica[*proximo_frame])) return -1;
-        tabela_paginas[pagina] = *proximo_frame;
-        (*proximo_frame)++;
+        int frame = escolher_frame_fifo(proximo_frame, vitima_fifo);
+        if (!carregar_pagina(armazenamento, pagina, memoria_fisica[frame])) return -1;
+        tabela_paginas[pagina] = frame;
+        pagina_do_frame[frame] = pagina;
         (*faltas)++;
     }
     int frame = tabela_paginas[pagina];
@@ -118,12 +133,13 @@ int main(int argc, char *argv[]) {
         tabela_paginas[i] = -1;
     }
     int proximo_frame = 0;
+    int vitima_fifo = 0;
     int faltas = 0;
     char linha[64];
     while (fgets(linha, sizeof(linha), enderecos) != NULL) {
         int endereco = atoi(linha);
         signed char valor;
-        int fisico = traduzir_sem_tlb(armazenamento, endereco, &proximo_frame, &faltas, &valor);
+        int fisico = traduzir_sem_tlb(armazenamento, endereco, &proximo_frame, &vitima_fifo, &faltas, &valor);
         if (fisico < 0) {
             fprintf(stderr, "Erro: falha ao ler o armazenamento\n");
             fclose(enderecos);
