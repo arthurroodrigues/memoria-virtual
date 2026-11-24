@@ -150,3 +150,83 @@ IGUAL
 [?2004lexit
 
 Script done on 2026-11-22 07:18:25-03:00 [COMMAND_EXIT_CODE="0"]
+Script started on 2026-11-24 11:18:25-03:00 [TERM="xterm-256color" TTY="/dev/pts/5" COLUMNS="177" LINES="14"]
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mmake[27m
+[7m./vm addresses.txt lru fifo | head -n 128 > meu.txt[27m
+[7mhead -n 128 correct.txt | awk '{print $1,$2,$3,$6,$7,$8,$9,$10}' > esperado.txt[27m
+[7mdiff meu.txt esperado.txt && echo IGUAL[27m
+[7mrm -f meu.txt esperado.txt[27m
+[7m./vm addresses.txt fifo fifo > /dev/null[27m[A[A[A[A[Amake
+./vm addresses.txt lru fifo | head -n 128 > meu.txt
+head -n 128 correct.txt | awk '{print $1,$2,$3,$6,$7,$8,$9,$10}' > esperado.txt
+diff meu.txt esperado.txt && echo IGUAL
+rm -f meu.txt esperado.txt
+./vm addresses.txt fifo fifo > /dev/null
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+IGUAL
+Page faults: 538
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mmake[27m
+[7m./vm addresses.txt lru fifo | grep Virtual > meu.txt[27m
+[7mgrep Virtual correct.txt | awk '{print $1,$2,$3,$6,$7,$8,$9,$10}' > esperado.txt[27m
+[7mdiff meu.txt esperado.txt && echo IGUAL[27m
+[7mrm -f meu.txt esperado.txt[27m
+[7m./vm addresses.txt lru fifo > /dev/null[27m
+[7m./vm addresses.txt fifo fifo > /dev/null[27m[A[A[A[A[A[Amake
+./vm addresses.txt lru fifo | grep Virtual > meu.txt
+grep Virtual correct.txt | awk '{print $1,$2,$3,$6,$7,$8,$9,$10}' > esperado.txt
+diff meu.txt esperado.txt && echo IGUAL
+rm -f meu.txt esperado.txt
+./vm addresses.txt lru fifo > /dev/null
+./vm addresses.txt fifo fifo > /dev/null
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+Page faults: 539
+IGUAL
+Page faults: 539
+Page faults: 538
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mfeat: implementa escolher_frame_lru[27m[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cfeat: implementa escolher_frame_lru
+[?2004lfeat:: command not found
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mmv correct.txt gabarito.txt[27mmv correct.txt gabarito.txt
+[?2004l[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ e[K[7mmake[27m
+[7m./vm addresses.txt lru fifo | grep Virtual > meu.txt[27m
+[7mgrep Virtual gabarito.txt > esperado.txt[27m
+[7mdiff meu.txt esperado.txt && echo IGUAL[27m
+[7mrm -f meu.txt esperado.txt[27m
+[7m./vm addresses.txt lru fifo > /dev/null[27m[A[A[A[A[Amake
+./vm addresses.txt lru fifo | grep Virtual > meu.txt
+grep Virtual gabarito.txt > esperado.txt
+diff meu.txt esperado.txt && echo IGUAL
+rm -f meu.txt esperado.txt
+./vm addresses.txt lru fifo > /dev/null
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+Page faults: 539
+TLB hits: 54
+IGUAL
+Page faults: 539
+TLB hits: 54
+[?2004h]0;arthur@DESKTOP-P609UAP: ~/ara[01;32marthur@DESKTOP-P609UAP[00m:[01;34m~/ara[00m$ [7mmake[27m
+[7m./vm addresses.txt lru fifo | grep Virtual > meu.txt[27m
+[7mgrep Virtual gabarito.txt > esperado.txt[27m
+[7mdiff meu.txt esperado.txt && echo IGUAL[27m
+[7mrm -f meu.txt esperado.txt[27m
+[7m./vm addresses.txt lru fifo > /dev/null[27m
+[7m./vm addresses.txt lru lru > /dev/null[27m
+[7m./vm addresses.txt fifo fifo > /dev/null[27m
+[7m./vm addresses.txt fifo lru > /dev/null[27m[A[A[A[A[A[A[A[Amake
+./vm addresses.txt lru fifo | grep Virtual > meu.txt
+grep Virtual gabarito.txt > esperado.txt
+diff meu.txt esperado.txt && echo IGUAL
+rm -f meu.txt esperado.txt
+./vm addresses.txt lru fifo > /dev/null
+./vm addresses.txt lru lru > /dev/null
+./vm addresses.txt fifo fifo > /dev/null
+./vm addresses.txt fifo lru > /dev/null
+[?2004lgcc -Wall -Wextra -O2 -pthread -o vm vm.c
+Page faults: 539
+TLB hits: 54
+IGUAL
+Page faults: 539
+TLB hits: 54
+Page faults: 539
+TLB hits: 55
+Page faults: 538
+TLB hi

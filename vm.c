@@ -34,6 +34,8 @@ static signed char memoria_fisica[NUM_FRAMES][TAMANHO_PAGINA];
 static int tlb_pagina[TAMANHO_TLB];
 static int tlb_frame[TAMANHO_TLB];
 static int proxima_entrada_tlb = 0;
+static long uso_tlb[TAMANHO_TLB];
+static long relogio_tlb = 0;
 
 static int buscar_tlb(int pagina, int *frame) {
     for (int i = 0; i < TAMANHO_TLB; i++) {
@@ -50,6 +52,26 @@ static int inserir_tlb_fifo(int pagina, int frame) {
     tlb_pagina[indice] = pagina;
     tlb_frame[indice] = frame;
     proxima_entrada_tlb = (proxima_entrada_tlb + 1) % TAMANHO_TLB;
+    return indice;
+}
+
+static void atualizar_uso_tlb(int indice) {
+    relogio_tlb++;
+    uso_tlb[indice] = relogio_tlb;
+}
+
+static int inserir_tlb_lru(int pagina, int frame) {
+    int indice = 0;
+    for (int i = 0; i < TAMANHO_TLB; i++) {
+        if (tlb_pagina[i] == -1) {
+            indice = i;
+            break;
+        }
+        if (uso_tlb[i] < uso_tlb[indice]) indice = i;
+    }
+    tlb_pagina[indice] = pagina;
+    tlb_frame[indice] = frame;
+    atualizar_uso_tlb(indice);
     return indice;
 }
 
@@ -87,7 +109,7 @@ static int escolher_frame_lru(int *proximo_frame) {
     return vitima;
 }
 
-static int traduzir_endereco(FILE *armazenamento, int endereco, int usa_lru, int *proximo_frame, int *vitima_fifo, int *faltas, int *acertos_tlb, int *indice_tlb, signed char *valor) {
+static int traduzir_endereco(FILE *armazenamento, int endereco, int usa_lru, int usa_lru_tlb, int *proximo_frame, int *vitima_fifo, int *faltas, int *acertos_tlb, int *indice_tlb, signed char *valor) {
     int pagina = extrair_pagina(endereco);
     int deslocamento = extrair_deslocamento(endereco);
     int frame;
@@ -95,6 +117,7 @@ static int traduzir_endereco(FILE *armazenamento, int endereco, int usa_lru, int
     if (indice >= 0) {
         (*acertos_tlb)++;
         *indice_tlb = indice;
+        if (usa_lru_tlb) atualizar_uso_tlb(indice);
     } else {
         if (tabela_paginas[pagina] == -1) {
             int novo;
@@ -109,7 +132,11 @@ static int traduzir_endereco(FILE *armazenamento, int endereco, int usa_lru, int
             (*faltas)++;
         }
         frame = tabela_paginas[pagina];
-        *indice_tlb = inserir_tlb_fifo(pagina, frame);
+        if (usa_lru_tlb) {
+            *indice_tlb = inserir_tlb_lru(pagina, frame);
+        } else {
+            *indice_tlb = inserir_tlb_fifo(pagina, frame);
+        }
     }
     relogio++;
     ultimo_uso[frame] = relogio;
@@ -202,12 +229,13 @@ int main(int argc, char *argv[]) {
     int faltas = 0;
     int acertos_tlb = 0;
     int usa_lru = strcmp(argv[2], "lru") == 0;
+    int usa_lru_tlb = strcmp(argv[3], "lru") == 0;
     char linha[64];
     while (fgets(linha, sizeof(linha), enderecos) != NULL) {
         int endereco = atoi(linha);
         signed char valor;
         int indice_tlb = 0;
-        int fisico = traduzir_endereco(armazenamento, endereco, usa_lru, &proximo_frame, &vitima_fifo, &faltas, &acertos_tlb, &indice_tlb, &valor);
+        int fisico = traduzir_endereco(armazenamento, endereco, usa_lru, usa_lru_tlb, &proximo_frame, &vitima_fifo, &faltas, &acertos_tlb, &indice_tlb, &valor);
         if (fisico < 0) {
             fprintf(stderr, "Erro: falha ao ler o armazenamento\n");
             fclose(enderecos);
